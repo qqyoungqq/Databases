@@ -1,0 +1,226 @@
+/*------ XML World-Countries XPath and XQuery Exercises --------*/
+--Q1. Return the area of Mongolia. 
+doc("countries.xml")/countries/country[@name = "Mongolia"]/data(@area)
+
+--Q2. Return the names of all cities that have the same name as the country in which they are located. 
+doc("countries.xml")/countries/country[city/name = data(@name)]/city[name = doc("countries.xml")/countries/country/data(@name)]/name
+
+--Q3. Return the average population of Russian-speaking countries. 
+let $ap := avg(doc("countries.xml")/countries/country[language = "Russian"]/data(@population))
+return $ap
+
+--Q4. Return the names of all countries that have at least three cities with population greater than 3 million.
+let $countries := doc("countries.xml")/countries/country
+for $c in $countries
+where count($c/city[population > 3000000])>=3
+return $c/data(@name)
+
+--Q5. Create a list of French-speaking and German-speaking countries. The result should take the form:
+<result>
+  <French>
+    <country>country-name</country>
+    <country>country-name</country>
+    ...
+  </French>
+  <German>
+    <country>country-name</country>
+    <country>country-name</country>
+    ...
+  </German>
+</result>
+
+
+<result>
+<French>
+{for $c in doc("countries.xml")/countries/country
+where $c[language = "French"]
+return <country>{$c/data(@name)}</country>}
+</French>
+<German>
+{for $c in doc("countries.xml")/countries/country
+where $c[language = "German"]
+return <country>{$c/data(@name)}</country>}
+</German>
+</result>
+
+
+--Q6. Return the countries with the highest and lowest population densities. Note that because the "/" operator has its own meaning in XPath and XQuery, the division operator is infix "div". To compute population density use "(@population div @area)". You can assume density values are unique. The result should take the form:
+<result>
+  <highest density="value">country-name</highest>
+  <lowest density="value">country-name</lowest>
+</result>
+
+
+let $ma := max(doc("countries.xml")/countries/country/data(@population div @area))
+let $mi :=  min(doc("countries.xml")/countries/country/data(@population div @area))
+return <result>
+	  <highest density="{$ma}"> {doc("countries.xml")/countries/country[data(@population div @area) = $ma]/data(@name)} </highest>
+	  <lowest density="{$mi}"> {doc("countries.xml")/countries/country[data(@population div @area) = $mi]/data(@name)} </lowest>
+	  </result>
+
+/*------ XML World-Countries XPath and XQuery Exercises Extras --------*/
+--Q1. Return the names of all countries with population greater than 100 million. 
+doc("countries.xml")/countries/country[@population >100000000 ]/data(@name)
+
+--Q2. Return the names of all countries where over 50% of the population speaks German. (Hint: Depending on your solution, you may want to use ".", which refers to the "current element" within an XPath expression.)
+for $C in doc("countries.xml")/countries/country[language = "German"]
+for $L in $C/language
+where $L/data(@percentage)>50 and $L = "German"
+return $C/data(@name) 
+
+--Q3. for $co in doc("countries.xml")/countries/country
+for $ci in $co/city
+where $ci/population > ($co/data(@population) div 3)
+return $co/data(@name) 
+
+--Q4. Return the population density of Qatar. Note: Since the "/" operator has its own meaning in XPath and XQuery, the division operator is "div". To compute population density use "(@population div @area)". 
+doc("countries.xml")/countries/country[@name="Qatar"]/(data(@population) div data(@area))
+
+--Q5. Return the names of all countries whose population is less than one thousandth that of some city (in any country). 
+let $p := doc("countries.xml")/countries/country/city/population
+for $co in doc("countries.xml")/countries/country
+where $co/data(@population)*1000 < $p
+return $co/data(@name) 
+
+--Q6. Return all city names that appear more than once, i.e., there is more than one city with that name in the data. Return only one instance of each such city name. (Hint: You might want to use the "preceding" and/or "following" navigation axes for this query, which were not covered in the video or our demo script; they match any preceding or following node, not just siblings.) 
+doc("countries.xml")/countries/country/city[name = following::name]/name
+
+--Q7. Return the names of all countries containing a city such that some other country has a city of the same name. (Hint: You might want to use the "preceding" and/or "following" navigation axes for this query, which were not covered in the video or our demo script; they match any preceding or following node, not just siblings.) 
+doc("countries.xml")/countries/country[city/name=following::name or city/name=preceding::name]/data(@name)
+
+--Q8. Return the names of all countries whose name textually contains a language spoken in that country. For instance, Uzbek is spoken in Uzbekistan, so return Uzbekistan. (Hint: You may want to use ".", which refers to the "current element" within an XPath expression.) 
+for $C in doc("countries.xml")/countries/country
+for $L in $C/language
+where contains($C/data(@name),$L)
+return $C/data(@name)
+
+--Q9. Return the names of all countries in which people speak a language whose name textually contains the name of the country. For instance, Japanese is spoken in Japan, so return Japan. (Hint: You may want to use ".", which refers to the "current element" within an XPath expression.) 
+for $C in doc("countries.xml")/countries/country
+for $L in $C/language
+where contains($L, $C/data(@name))
+return $C/data(@name)
+
+--Q10. Return all languages spoken in a country whose name textually contains the language name. For instance, German is spoken in Germany, so return German. (Hint: Depending on your solution, may want to use data(.), which returns the text value of the "current element" within an XPath expression.) 
+for $C in doc("countries.xml")/countries/country
+for $L in $C/language
+where contains($C/data(@name),$L)
+return $L/data(.)
+
+--Q11. Return all languages whose name textually contains the name of a country in which the language is spoken. For instance, Icelandic is spoken in Iceland, so return Icelandic. (Hint: Depending on your solution, may want to use data(.), which returns the text value of the "current element" within an XPath expression.) 
+for $C in doc("countries.xml")/countries/country
+for $L in $C/language
+where contains($L,$C/data(@name))
+return $L/data(.)
+
+--Q12. Return the number of countries where Russian is spoken. 
+let $n := count(doc("countries.xml")/countries/country[language = "Russian"])
+return $n
+
+--Q13. Return the names of all countries for which the data does not include any languages or cities, but the country has more than 10 million people. 
+for $C in doc("countries.xml")/countries/country
+where count($C[language])=0 and count($C[city])=0 and $C/data(@population)>10000000
+return $C/data(@name)
+
+--Q14. Return the name of the country with the highest population. (Hint: You may need to explicitly cast population numbers as integers with xs:int() to get the correct answer.) 
+let $ma := max(doc("countries.xml")/countries/country/data(@population))
+for $c in doc("countries.xml")/countries/country
+where xs:int($c/data(@population)) = $ma
+return $c/data(@name)
+
+--Q15. Return the name of the country that has the city with the highest population. (Hint: You may need to explicitly cast population numbers as integers with xs:int() to get the correct answer.) 
+let $ma := max(doc("countries.xml")/countries/country/city/population)
+for $c in doc("countries.xml")/countries/country
+for $ci in $c/city
+where xs:int($ci/population)=xs:int($ma)
+return $c/data(@name)
+
+--Q16. Return the average number of languages spoken in countries where Russian is spoken. 
+let $nl := count(doc("countries.xml")/countries/country[language = "Russian"]/language)
+let $nc := count(doc("countries.xml")/countries/country[language = "Russian"])
+return $nl div $nc
+
+--Q17. Return all country-language pairs where the language is spoken in the country and the name of the country textually contains the language name. Return each pair as a country element with language attribute, e.g.,
+for $C in doc("countries.xml")/countries/country
+for $L in $C/language
+where contains($C/data(@name),$L)
+return 
+<country language="{$L/data(.)}"> {$C/data(@name)} </country>
+
+--Q18. Return all countries that have at least one city with population greater than 7 million. For each one, return the country name along with the cities greater than 7 million, in the format:
+<country name="country-name">
+  <big>city-name</big>
+  <big>city-name</big>
+  ...
+</country>
+
+for $C in doc("countries.xml")/countries/country
+where count($C/city[population>7000000]) >= 1
+return <country name="{$C/data(@name)}">
+  {for $city in $C/city[population>7000000]
+  return <big>{$city/name/data(.)}</big>}
+  </country>
+
+--Q19. Return all countries where at least one language is listed, but the total percentage for all listed languages is less than 90%. Return the country element with its name attribute and its language subelements, but no other attributes or subelements. 
+for $C in doc("countries.xml")/countries/country[language]
+where sum($C/language/data(@percentage)) lt 90
+return <country name="{$C/data(@name)}">
+  {for $L in $C/language
+  return $L
+}
+</country>
+
+--Q20. Return all countries where at least one language is listed, and every listed language is spoken by less than 20% of the population. Return the country element with its name attribute and its language subelements, but no other attributes or subelements. 
+for $C in doc("countries.xml")/countries/country[language]
+where count($C/language[@percentage < 20]) = count($C/language)
+return <country name="{$C/data(@name)}">
+  {for $L in $C/language
+  return $L
+}
+</country>
+
+--Q21. Find all situations where one country's most popular language is another country's least popular, and both countries list more than one language. (Hint: You may need to explicitly cast percentages as floating-point numbers with xs:float() to get the correct answer.) Return the name of the language and the two countries, each in the format:
+let $countries := doc('countries.xml')/countries/country,
+  $most_popular := 
+    for $c in $countries[count(language) >= 2]
+      for $lm in $c/language
+        where xs:float($lm/data(@percentage)) = xs:float(max($c/language/data(@percentage)))
+        return $lm,
+
+  $least_popular := 
+    for $c in $countries[count(language) >= 2]
+      for $ll in $c/language
+        where xs:float($ll/data(@percentage)) = xs:float(min($c/language/data(@percentage)))
+        return $ll
+
+for $m in $most_popular
+ for $l in $least_popular
+  where data($m)=data($l)
+  return 
+  <LangPair language="{data($m)}">
+    <MostPopular>{$m/parent::country/data(@name)}</MostPopular>
+    <LeastPopular>{$l/parent::country/data(@name)}</LeastPopular>
+  </LangPair>
+
+--Q22. For each language spoken in one or more countries, create a "language" element with a "name" attribute and one "country" subelement for each country in which the language is spoken. The "country" subelements should have two attributes: the country "name", and "speakers" containing the number of speakers of that language (based on language percentage and the country's population). Order the result by language name, and enclose the entire list in a single "languages" element. For example, your result might look like:
+<languages>
+  ...
+  <language name="Arabic">
+    <country name="Iran" speakers="660942"/>
+    <country name="Saudi Arabia" speakers="19409058"/>
+    <country name="Yemen" speakers="13483178"/>
+  </language>
+  ...
+</languages>
+
+<languages>
+{let $lan := distinct-values(doc("countries.xml")/countries/country/language)
+for $l in $lan
+order by $l
+return <language name="{$l}">
+  {for $country in doc("countries.xml")/countries/country[language = $l]
+    for $sl in $country/language
+    where $sl = $l
+  return <country name="{$country/data(@name)}" speakers="{xs:int($sl/data(@percentage) * $country/data(@population) div 100)}"></country>}
+</language>}
+</languages>
+  

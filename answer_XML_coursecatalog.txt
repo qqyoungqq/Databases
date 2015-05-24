@@ -1,0 +1,96 @@
+/*------ XML Course-Catalog XPath and XQuery Exercises --------*/
+--Q1. Return all Title elements (of both departments and courses). 
+ doc("courses.xml")//Title
+
+--Q2. Return last names of all department chairs.
+ doc("courses.xml")//Chair//Last_Name
+
+--Q3. Return titles of courses with enrollment greater than 500. 
+ doc("courses.xml")//Course[@Enrollment > 500]/Title
+
+--Q4. Return titles of departments that have some course that takes "CS106B" as a prerequisite. */
+ doc("courses.xml")/Course_Catalog/Department[Course/Prerequisites/Prereq = "CS106B"]/Title
+
+--Q5. Return last names of all professors or lecturers who use a middle initial. Don't worry about eliminating duplicates. 
+ doc("courses.xml")/Course_Catalog//(Professor|Lecturer)[Middle_Initial]/Last_Name
+
+--Q6. Return the count of courses that have a cross-listed course (i.e., that have "Cross-listed" in their description). 
+ let $ct := doc("courses.xml")//Course[contains(Description,"Cross-listed")]/Title
+ return count($ct)
+
+--Q7. Return the average enrollment of all courses in the CS department. 
+ let $en := doc("courses.xml")/Course_Catalog/Department[@Code = "CS"]/Course/data(@Enrollment)
+ return avg($en)
+
+--Q8. Return last names of instructors teaching at least one course that has "system" in its description and enrollment greater than 100. 
+ doc("courses.xml")//Course[contains(Description,"system") and @Enrollment > 100]//Last_Name
+ 
+
+--Q9. Return the title of the course with the largest enrollment. 
+ doc("courses.xml")//Course[@Enrollment = max(doc("courses.xml")//Course/data(@Enrollment))]/Title
+
+ /*---- XML Course-Catalog XPath and XQuery Exercises Extras ----*/
+ --Q1. Return the course number of the course that is cross-listed as "LING180". 
+ doc("courses.xml")//Course[contains(Description,"Cross-listed") and contains(Description,"LING180") ]/data(@Number)
+
+ --Q2. Return course numbers of courses that have the same title as some other course. (Hint: You might want to use the "preceding" and "following" navigation axes for this query, which were not covered in the video or our demo script; they match any preceding or following node, not just siblings.) 
+ doc("courses.xml")//Course[Title = following::Title]/Title
+ doc("courses.xml")//Course[Title = following::Title or Title = preceding::Title]/data(@Number)
+
+ --Q3. Return course numbers of courses taught by an instructor with first name "Daphne" or "Julie". 
+ for $n in doc("courses.xml")//Course
+	where $n/Instructors/*/First_Name = "Daphne" or $n/Instructors/*/First_Name = "Julie"
+	return $n/data(@Number)
+
+ --Q4. Return the number (count) of courses that have no lecturers as instructors. 
+ count(doc("courses.xml")//Course/Title)-count(doc("courses.xml")//Course[Instructors[Lecturer]]/Title)
+
+ --Q5. Return titles of courses taught by the chair of a department. For this question, you may assume that all professors have distinct last names. 
+ doc("courses.xml")//Course[Instructors//Last_Name = doc("courses.xml")/Course_Catalog/Department/Chair/*/Last_Name]/Title
+
+ --Q6. Return titles of courses that have both a lecturer and a professor as instructors. Return each title only once. 
+ doc("courses.xml")//Course[Instructors[Professor] and Instructors[Lecturer]]/Title
+
+ --Q7. Return titles of courses taught by a professor with the last name "Ng" but not by a professor with the last name "Thrun".
+ doc("courses.xml")/Course_Catalog/Department/Course[
+	Instructors/Professor/Last_Name = "Ng" and 
+	count(Instructors/Professor[Last_Name = "Thrun"])=0]/Title 
+
+ --Q8. Return course numbers of courses that have a course taught by Eric Roberts as a prerequisite. 
+ for $N in doc("courses.xml")//Course[Instructors/(Professor|Lecturer)[First_Name="Eric" and Last_Name="Roberts"]]/data(@Number)
+ for $C in doc("courses.xml")//Course[Prerequisites/Prereq = $N]
+ return $C/data(@Number)
+
+ --Q9. Create a summary of CS classes: List all CS department courses in order of enrollment. For each course include only its Enrollment (as an attribute) and its Title (as a subelement). 
+ <Summary>
+ {for $C in doc("courses.xml")/Course_Catalog/Department[@Code="CS"]/Course
+ order by xs:int($C/@Enrollment)
+ return <Course>
+ 		{$C/@Enrollment}
+ 		{$C/Title}
+ 		</Course>}
+ 		</Summary>
+ 		
+ --Q10. Return a "Professors" element that contains as subelements a listing of all professors in all departments, sorted by last name with each professor appearing once. The "Professor" subelements should have the same structure as in the original data. For this question, you may assume that all professors have distinct last names. Watch out -- the presence/absence of middle initials may require some special handling. (This problem is quite challenging; congratulations if you get it right.) 
+ <Professors>
+{for $unique in distinct-values(doc("courses.xml")//Professor/Last_Name)
+ order by $unique
+ return <Professor>
+ 		<First_Name> {distinct-values(doc("courses.xml")//Professor[Last_Name = $unique]/First_Name)} </First_Name>
+ 		{for $m in distinct-values(doc("courses.xml")//Professor[Last_Name = $unique and Middle_Initial]/Middle_Initial)
+ 		where $m return <Middle_Initial>{$m}</Middle_Initial>}
+ 		<Last_Name> {$unique} </Last_Name>
+ 		</Professor>}
+</Professors>
+
+ --Q11. Expanding on the previous question, create an inverted course listing: Return an "Inverted_Course_Catalog" element that contains as subelements professors together with the courses they teach, sorted by last name. You may still assume that all professors have distinct last names. The "Professor" subelements should have the same structure as in the original data, with an additional single "Courses" subelement under Professor, containing a further "Course" subelement for each course number taught by that professor. Professors who do not teach any courses should have no Courses subelement at all. (This problem is very challenging; extra congratulations if you get it right.) 
+<Professors>
+{for $unique in distinct-values(doc("courses.xml")//Professor/Last_Name)
+ order by $unique
+ return <Professor>
+ 		<First_Name> {distinct-values(doc("courses.xml")//Professor[Last_Name = $unique]/First_Name)} </First_Name>
+ 		{for $m in distinct-values(doc("courses.xml")//Professor[Last_Name = $unique and Middle_Initial]/Middle_Initial)
+ 		where $m return <Middle_Initial>{$m}</Middle_Initial>}
+ 		<Last_Name> {$unique} </Last_Name>
+ 		</Professor>}
+</Professors>
