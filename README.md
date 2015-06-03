@@ -5,3 +5,5 @@ Files include:
 2) "answer_socialnetwork.sql": answers to SQL Social-Network Exercises (Query and Modification Exercises)
 3) "answer_XML_coursecatalog.txt": answers to XML Course-Catalog XPath and XQuery Exercises
 4) "answer_XML_worldcountries.txt": answers to XML World-Countries XPath and XQuery Exercises
+4) "answer_XSLT_coursecatalog.txt": answers to XML Course-Catalog XSLT Exercises
+4) "answer_XSLT_worldcountries.txt": answers to XML World-Countries XSLT Exercises
